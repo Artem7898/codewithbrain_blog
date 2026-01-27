@@ -14,7 +14,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Собираем статические файлы
 RUN python manage.py collectstatic --noinput
+
+# Применяем миграции при сборке образа
+RUN python manage.py migrate --noinput
 
 EXPOSE 8000
 
