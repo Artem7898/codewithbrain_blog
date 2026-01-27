@@ -14,11 +14,26 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Применяем миграции
+RUN python manage.py migrate --noinput
+
+# Автоматически создаем суперпользователя если его нет
+RUN python -c "
+import os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+import django
+django.setup()
+from django.contrib.auth import get_user_model
+User = get_user_model()
+if not User.objects.filter(username='admin').exists():
+    User.objects.create_superuser('codewithbrain', 'alimpievne@gmail.com', '560arta1789rit')
+    print('✅ Суперпользователь admin создан!')
+else:
+    print('⚠️ Суперпользователь уже существует')
+"
+
 # Собираем статические файлы
 RUN python manage.py collectstatic --noinput
-
-# Применяем миграции при сборке образа
-RUN python manage.py migrate --noinput
 
 EXPOSE 8000
 
