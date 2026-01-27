@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-import dj_database_url
 
 load_dotenv()
 
@@ -9,44 +8,42 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ==================== БАЗОВЫЕ НАСТРОЙКИ ====================
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# Ключи и безопасность
+SECRET_KEY = os.getenv('SECRET_KEY', os.getenv('DJANGO_SECRET_KEY', 'dev-secret-key-change-in-production'))
 
-# Отладочная информация
-print("=" * 50)
-print("⚠️ ВНИМАНИЕ: Используется SQLite на Railway")
-print("⚠️ Это временное решение для запуска сайта")
-print("⚠️ Для продакшена добавьте PostgreSQL: Railway → + New → Database")
-print("=" * 50)
-# ==================== ПРИЛОЖЕНИЯ ====================
+# Режим отладки - ОПРЕДЕЛЯЕМ ПЕРВЫМ!
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
+
+# Домены
+if DEBUG:
+    ALLOWED_HOSTS = ['*']  # В разработке разрешаем всё
+    CSRF_TRUSTED_ORIGINS = []
+else:
+    # В продакшене явно указываем домены Railway
+    ALLOWED_HOSTS = [
+        'codewithbrainblog-production.up.railway.app',
+        'localhost',
+        '127.0.0.1',
+    ]
+    CSRF_TRUSTED_ORIGINS = [
+        'https://codewithbrainblog-production.up.railway.app',
+    ]
 
 INSTALLED_APPS = [
-    # Unfold admin (должен быть перед django.contrib.admin)
     'unfold',
     'unfold.contrib.filters',
     'unfold.contrib.forms',
-
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # Third party
     'rest_framework',
     'taggit',
     'django_ckeditor_5',
-
-    # Apps
     'blog',
 ]
-
-# ==================== MIDDLEWARE ====================
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -59,8 +56,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'blog.middleware.AdminAccessLogMiddleware',
 ]
-
-# ==================== НАСТРОЙКИ URL И ШАБЛОНОВ ====================
 
 ROOT_URLCONF = 'config.urls'
 
@@ -83,31 +78,21 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # ==================== БАЗА ДАННЫХ ====================
-# КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Правильная настройка для Railway
+# Временное решение: используем SQLite на Railway
 
-DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
-if DATABASE_URL:
-    # Используем PostgreSQL от Railway
-    DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-    }
-    
-    # Обязательно добавляем SSL для Railway PostgreSQL
-    if 'railway' in DATABASE_URL.lower() or 'postgres.railway.app' in DATABASE_URL.lower():
-        DATABASES['default']['OPTIONS'] = {
-            'sslmode': 'require',
-        }
-else:
-    # На Railway всегда должен быть DATABASE_URL
-    # Если его нет, значит мы в локальной разработке
-    # Используем SQLite для локальной разработки как fallback
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+# Отладочная информация
+print("=" * 50)
+print("⚠️ ВНИМАНИЕ: Используется SQLite на Railway")
+print("⚠️ Это временное решение для запуска сайта")
+print("⚠️ Для продакшена добавьте PostgreSQL: Railway → + New → Database")
+print("=" * 50)
 
 # ==================== АУТЕНТИФИКАЦИЯ ====================
 
@@ -117,8 +102,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
-
-# ==================== ЯЗЫК И ВРЕМЯ ====================
 
 LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'Europe/Moscow'
@@ -133,9 +116,9 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # WhiteNoise configuration для Railway
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-WHITENOISE_MANIFEST_STRICT = False  # Игнорировать отсутствующие файлы
-WHITENOISE_USE_FINDERS = True  # Искать статические файлы в приложениях
-WHITENOISE_KEEP_ONLY_HASHED_FILES = True  # Удалять старые файлы
+WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_KEEP_ONLY_HASHED_FILES = True
 
 # Media files
 MEDIA_URL = '/media/'
@@ -161,19 +144,6 @@ CKEDITOR_5_CONFIGS = {
             'heading', '|', 'bold', 'italic', 'link', 'bulletedList',
             'numberedList', 'blockQuote', 'imageUpload', 'codeBlock'
         ],
-        'image': {
-            'toolbar': [
-                'imageTextAlternative', '|',
-                'imageStyle:alignLeft', 'imageStyle:alignCenter', 'imageStyle:alignRight', '|',
-                'resizeImage'
-            ],
-            'styles': [
-                'alignLeft', 'alignCenter', 'alignRight'
-            ]
-        },
-        'table': {
-            'contentToolbar': ['tableColumn', 'tableRow', 'mergeTableCells']
-        }
     },
 }
 
@@ -188,16 +158,12 @@ UNFOLD = {
 # ==================== НАСТРОЙКИ БЕЗОПАСНОСТИ ====================
 
 if not DEBUG:
-    # Включить все настройки безопасности для продакшена
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 год
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
 
 # ==================== ЛОГИРОВАНИЕ ====================
 
@@ -205,20 +171,8 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
         'simple': {
             'format': '{levelname} {message}',
-            'style': '{',
-        },
-        'admin': {
-            'format': '{asctime} | ADMIN | User: {user} | Action: {action} | Model: {model} | Object: {object_id} | Details: {details}',
-            'style': '{',
-        },
-        'access': {
-            'format': '{asctime} | ACCESS | Method: {method} | Path: {path} | Status: {status_code} | Duration: {duration:.2f}s | User: {user} | IP: {ip}',
             'style': '{',
         },
     },
@@ -227,104 +181,12 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/debug.log'),
-            'formatter': 'verbose',
-            'maxBytes': 10485760,
-            'backupCount': 5,
-            'encoding': 'utf-8',
-        } if DEBUG else {
-            'class': 'logging.NullHandler',  # В продакшене логи только в stdout
-        },
-        'admin_file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/admin.log'),
-            'formatter': 'admin',
-            'maxBytes': 10485760,
-            'backupCount': 5,
-            'encoding': 'utf-8',
-        } if DEBUG else {
-            'class': 'logging.NullHandler',
-        },
-        'access_file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/access.log'),
-            'formatter': 'access',
-            'maxBytes': 10485760,
-            'backupCount': 5,
-            'encoding': 'utf-8',
-        } if DEBUG else {
-            'class': 'logging.NullHandler',
-        },
-        'security_file': {
-            'level': 'WARNING',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/security.log'),
-            'formatter': 'verbose',
-            'maxBytes': 10485760,
-            'backupCount': 5,
-            'encoding': 'utf-8',
-        } if DEBUG else {
-            'class': 'logging.NullHandler',
-        },
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
-            'propagate': True,
-        },
-        'django.request': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        'django.security': {
-            'handlers': ['console'],
-            'level': 'WARNING',
-            'propagate': False,
-        },
-        'django.server': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'blog': {
-            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
-        },
-        'admin_logger': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'access_logger': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
         },
     },
 }
-
-# Создаем папку logs только в разработке
-if DEBUG:
-    logs_dir = os.path.join(BASE_DIR, 'logs')
-    if not os.path.exists(logs_dir):
-        os.makedirs(logs_dir)
-        print(f"Создана папка для логов: {logs_dir}")
-
-# ==================== ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА ДЛЯ RAILWAY ====================
-
-# Для отладки: вывести информацию о подключении к базе данных
-if not DEBUG:
-    print("=" * 50)
-    print("PRODUCTION ENVIRONMENT")
-    print(f"DATABASE_URL exists: {bool(DATABASE_URL)}")
-    print(f"Database engine: {DATABASES['default']['ENGINE']}")
-    print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
-    print("=" * 50)
