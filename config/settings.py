@@ -15,16 +15,12 @@ SECRET_KEY = os.getenv('SECRET_KEY', os.getenv('DJANGO_SECRET_KEY', 'dev-secret-
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 # Домены
-if DEBUG:
-    ALLOWED_HOSTS = ['*']  # В разработке разрешаем всё
-    CSRF_TRUSTED_ORIGINS = []
-else:
-    # В продакшене явно указываем домены Railway
-    ALLOWED_HOSTS = [
-        'codewithbrainblog-production.up.railway.app',
-        'localhost',
-        '127.0.0.1',
-    ]
+ALLOWED_HOSTS = [
+    'helpful-adventure-production-7f22.up.railway.app',
+    '.railway.app',  # разрешает все поддомены railway
+    'localhost',
+    '127.0.0.1',
+]
     CSRF_TRUSTED_ORIGINS = [
         'https://codewithbrainblog-production.up.railway.app',
     ]
