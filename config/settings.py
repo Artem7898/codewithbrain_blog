@@ -7,26 +7,30 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Получаем Railway URL, если есть
-RAILWAY_STATIC_URL = os.getenv('RAILWAY_STATIC_URL')
-RAILWAY_ENVIRONMENT = os.getenv('RAILWAY_ENVIRONMENT')
+# ==================== БАЗОВЫЕ НАСТРОЙКИ ====================
 
+# Ключи и безопасность
 SECRET_KEY = os.getenv('SECRET_KEY', os.getenv('DJANGO_SECRET_KEY', 'dev-secret-key-change-in-production'))
 
-# На Railway всегда DEBUG=False в продакшене
-DEBUG = os.getenv('DEBUG', 'False') == 'True' and not RAILWAY_ENVIRONMENT
+# Режим отладки
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-# ALLOWED_HOSTS для Railway
-hosts = os.getenv('ALLOWED_HOSTS', '')
-if hosts:
-    ALLOWED_HOSTS = hosts.split(',')
-else:
-    ALLOWED_HOSTS = ['*']  # В Railway разрешаем все хосты
-
-# CSRF trusted origins для HTTPS
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
-if not CSRF_TRUSTED_ORIGINS or CSRF_TRUSTED_ORIGINS == ['']:
+# Домены
+if DEBUG:
+    ALLOWED_HOSTS = ['*']  # В разработке разрешаем всё
     CSRF_TRUSTED_ORIGINS = []
+else:
+    # В продакшене явно указываем домены Railway
+    ALLOWED_HOSTS = [
+        'codewithbrainblog-production.up.railway.app',
+        'localhost',
+        '127.0.0.1',
+    ]
+    CSRF_TRUSTED_ORIGINS = [
+        'https://codewithbrainblog-production.up.railway.app',
+    ]
+
+# ==================== ПРИЛОЖЕНИЯ ====================
 
 INSTALLED_APPS = [
     # Unfold admin (должен быть перед django.contrib.admin)
@@ -50,6 +54,8 @@ INSTALLED_APPS = [
     'blog',
 ]
 
+# ==================== MIDDLEWARE ====================
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -61,6 +67,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'blog.middleware.AdminAccessLogMiddleware',
 ]
+
+# ==================== НАСТРОЙКИ URL И ШАБЛОНОВ ====================
 
 ROOT_URLCONF = 'config.urls'
 
@@ -82,26 +90,35 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database - Railway предоставляет DATABASE_URL
-# Database - используем dj-database-url для Railway
+# ==================== БАЗА ДАННЫХ ====================
+# КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Правильная настройка для Railway
+
 DATABASE_URL = os.getenv('DATABASE_URL')
+
 if DATABASE_URL:
+    # Используем PostgreSQL от Railway
     DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
+    
+    # Обязательно добавляем SSL для Railway PostgreSQL
+    if 'railway' in DATABASE_URL.lower() or 'postgres.railway.app' in DATABASE_URL.lower():
+        DATABASES['default']['OPTIONS'] = {
+            'sslmode': 'require',
+        }
 else:
+    # На Railway всегда должен быть DATABASE_URL
+    # Если его нет, значит мы в локальной разработке
+    # Используем SQLite для локальной разработки как fallback
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DB_NAME', 'codewithbrain'),
-            'USER': os.getenv('DB_USER', 'postgres'),
-            'PASSWORD': os.getenv('DB_PASSWORD'),
-            'HOST': os.getenv('DB_HOST', 'localhost'),
-            'PORT': os.getenv('DB_PORT', '5432'),
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 
-# Password validation
+# ==================== АУТЕНТИФИКАЦИЯ ====================
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -109,12 +126,15 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# ==================== ЯЗЫК И ВРЕМЯ ====================
+
 LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# ==================== СТАТИЧЕСКИЕ И МЕДИА ФАЙЛЫ ====================
+
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
@@ -129,21 +149,10 @@ WHITENOISE_KEEP_ONLY_HASHED_FILES = True  # Удалять старые файл
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Для Railway может потребоваться хранить медиа файлы в облачном хранилище
-# Раскомментируйте при необходимости:
-# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-# AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-# AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-# AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-# AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
-# AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-# AWS_S3_FILE_OVERWRITE = False
-# AWS_DEFAULT_ACL = 'public-read'
-# AWS_QUERYSTRING_AUTH = False
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# REST Framework
+# ==================== REST FRAMEWORK ====================
+
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
@@ -152,7 +161,8 @@ REST_FRAMEWORK = {
     ] + (['rest_framework.renderers.BrowsableAPIRenderer'] if DEBUG else []),
 }
 
-# CKEditor 5
+# ==================== CKEDITOR 5 ====================
+
 CKEDITOR_5_CONFIGS = {
     'default': {
         'toolbar': [
@@ -175,15 +185,18 @@ CKEDITOR_5_CONFIGS = {
     },
 }
 
-# Unfold Admin
+# ==================== UNFOLD ADMIN ====================
+
 UNFOLD = {
     "SITE_TITLE": "CodeWithBrain Admin",
     "SITE_HEADER": "CodeWithBrain",
     "SITE_SYMBOL": "brain",
 }
 
-# Настройки безопасности для продакшена
+# ==================== НАСТРОЙКИ БЕЗОПАСНОСТИ ====================
+
 if not DEBUG:
+    # Включить все настройки безопасности для продакшена
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -194,7 +207,8 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-# Настройки логирования
+# ==================== ЛОГИРОВАНИЕ ====================
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -229,8 +243,8 @@ LOGGING = {
             'maxBytes': 10485760,
             'backupCount': 5,
             'encoding': 'utf-8',
-        } if not RAILWAY_ENVIRONMENT else {
-            'class': 'logging.NullHandler',  # На Railway логи лучше писать в stdout
+        } if DEBUG else {
+            'class': 'logging.NullHandler',  # В продакшене логи только в stdout
         },
         'admin_file': {
             'level': 'INFO',
@@ -240,7 +254,7 @@ LOGGING = {
             'maxBytes': 10485760,
             'backupCount': 5,
             'encoding': 'utf-8',
-        } if not RAILWAY_ENVIRONMENT else {
+        } if DEBUG else {
             'class': 'logging.NullHandler',
         },
         'access_file': {
@@ -251,7 +265,7 @@ LOGGING = {
             'maxBytes': 10485760,
             'backupCount': 5,
             'encoding': 'utf-8',
-        } if not RAILWAY_ENVIRONMENT else {
+        } if DEBUG else {
             'class': 'logging.NullHandler',
         },
         'security_file': {
@@ -262,7 +276,7 @@ LOGGING = {
             'maxBytes': 10485760,
             'backupCount': 5,
             'encoding': 'utf-8',
-        } if not RAILWAY_ENVIRONMENT else {
+        } if DEBUG else {
             'class': 'logging.NullHandler',
         },
     },
@@ -306,8 +320,19 @@ LOGGING = {
 }
 
 # Создаем папку logs только в разработке
-if not RAILWAY_ENVIRONMENT:
+if DEBUG:
     logs_dir = os.path.join(BASE_DIR, 'logs')
     if not os.path.exists(logs_dir):
         os.makedirs(logs_dir)
         print(f"Создана папка для логов: {logs_dir}")
+
+# ==================== ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА ДЛЯ RAILWAY ====================
+
+# Для отладки: вывести информацию о подключении к базе данных
+if not DEBUG:
+    print("=" * 50)
+    print("PRODUCTION ENVIRONMENT")
+    print(f"DATABASE_URL exists: {bool(DATABASE_URL)}")
+    print(f"Database engine: {DATABASES['default']['ENGINE']}")
+    print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
+    print("=" * 50)
