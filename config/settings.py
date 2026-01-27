@@ -11,15 +11,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Ключи и безопасность
 SECRET_KEY = os.getenv('SECRET_KEY', os.getenv('DJANGO_SECRET_KEY', 'dev-secret-key-change-in-production'))
 
-# Режим отладки - ОПРЕДЕЛЯЕМ ПЕРВЫМ!
+# Режим отладки
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 # Домены
 ALLOWED_HOSTS = [
     'helpful-adventure-production-7f22.up.railway.app',
-    '.railway.app',  # разрешает все поддомены railway
+    '.railway.app',
     'localhost',
     '127.0.0.1',
+    '*',  # временно для отладки
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -77,21 +78,35 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # ==================== БАЗА ДАННЫХ ====================
-# Временное решение: используем SQLite на Railway
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+import dj_database_url
+
+# Берем DATABASE_URL из переменных окружения Railway
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL:
+    # Используем PostgreSQL на Railway
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
-
-# Отладочная информация
-print("=" * 50)
-print("⚠️ ВНИМАНИЕ: Используется SQLite на Railway")
-print("⚠️ Это временное решение для запуска сайта")
-print("⚠️ Для продакшена добавьте PostgreSQL: Railway → + New → Database")
-print("=" * 50)
+    print("=" * 50)
+    print("✅ Используется PostgreSQL на Railway")
+    print("=" * 50)
+else:
+    # Локальная разработка: SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+    print("=" * 50)
+    print("⚠️ ВНИМАНИЕ: Используется SQLite для локальной разработки")
+    print("=" * 50)
 
 # ==================== АУТЕНТИФИКАЦИЯ ====================
 
@@ -113,13 +128,11 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
-# WhiteNoise configuration для Railway
+# WhiteNoise configuration
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 WHITENOISE_MANIFEST_STRICT = False
 WHITENOISE_USE_FINDERS = True
-WHITENOISE_KEEP_ONLY_HASHED_FILES = True
 
-# Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
