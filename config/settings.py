@@ -21,9 +21,12 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
 ]
-    CSRF_TRUSTED_ORIGINS = [
-        'https://codewithbrainblog-production.up.railway.app',
-    ]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://helpful-adventure-production-7f22.up.railway.app',
+    'https://codewithbrainblog-production.up.railway.app',
+    'https://*.railway.app',
+]
 
 INSTALLED_APPS = [
     'unfold',
