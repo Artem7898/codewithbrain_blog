@@ -9,27 +9,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ==================== БАЗОВЫЕ НАСТРОЙКИ ====================
 
-# Ключи и безопасность
-SECRET_KEY = os.getenv('SECRET_KEY', os.getenv('DJANGO_SECRET_KEY', 'dev-secret-key-change-in-production'))
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
-# Режим отладки
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
-
-# Домены
-if DEBUG:
-    ALLOWED_HOSTS = ['*']  # В разработке разрешаем всё
-    CSRF_TRUSTED_ORIGINS = []
-else:
-    # В продакшене явно указываем домены Railway
-    ALLOWED_HOSTS = [
-        'codewithbrainblog-production.up.railway.app',
-        'localhost',
-        '127.0.0.1',
-    ]
-    CSRF_TRUSTED_ORIGINS = [
-        'https://codewithbrainblog-production.up.railway.app',
-    ]
-
+# Отладочная информация
+print("=" * 50)
+print("⚠️ ВНИМАНИЕ: Используется SQLite на Railway")
+print("⚠️ Это временное решение для запуска сайта")
+print("⚠️ Для продакшена добавьте PostgreSQL: Railway → + New → Database")
+print("=" * 50)
 # ==================== ПРИЛОЖЕНИЯ ====================
 
 INSTALLED_APPS = [
