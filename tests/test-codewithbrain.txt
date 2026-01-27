@@ -1,0 +1,32 @@
+# Через manage.py:
+
+# Все тесты
+python manage.py test tests
+
+# Конкретные тесты
+python manage.py test tests.test_config
+python manage.py test tests.test_blog
+python manage.py test tests.test_api
+
+# Через pytest:
+
+# Все тесты с покрытием
+pytest tests/ -v --cov=blog --cov=config
+
+# Конкретные тесты
+pytest tests/test_config.py -v
+pytest tests/test_blog.py::TestBlogModels -v
+
+# Генерация отчетов:
+
+# Отчет о покрытии
+coverage run manage.py test tests
+coverage report
+coverage html -d test_reports/coverage
+
+# HTML отчет pytest
+pytest --html=test_reports/pytest_report.html --self-contained-html
+
+
+# Чтобы получить читаемый отчет:
+coverage report -m

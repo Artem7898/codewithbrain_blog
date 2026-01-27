@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ post.title }} | CodeWithBrain{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto fade-in">
+
+    <header class="mb-12 pb-8 border-b border-gray-700/50">
+        <div class="mb-6">
+            {% if post.category %}
+            <a href="{% url 'blog:category_posts' post.category.slug %}"
+               class="inline-block bg-purple-600/20 text-purple-300 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium hover:bg-purple-600/30 transition-colors duration-200">
+                {{ post.category.name }}
+            </a>
+            {% endif %}
+        </div>
+
+        <h1 class="text-5xl font-extrabold mb-6 leading-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            {{ post.title }}
+        </h1>
+
+        <div class="flex flex-wrap items-center gap-6 text-gray-400">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                    {{ post.author.username|first|upper }}
+                </div>
+                <div>
+                    <div class="font-medium text-gray-300">{{ post.author.username }}</div>
+                    <div class="text-xs">{{ post.author.get_full_name|default:"Блогер" }}</div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span>📅</span>
+                <span>{{ post.published_at|date:"d.m.Y" }}</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span>👁️</span>
+                <span>{{ post.views }} просмотров</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span>⏱️</span>
+                <span>{% with words=post.content|wordcount %}{{ words|div:200|ceil|add:1 }} мин{% endwith %}</span>
+            </div>
+        </div>
+
+        <div class="mt-6 flex gap-3">
+            <a href="#" class="bg-gray-800/50 p-2 rounded-lg hover:bg-purple-600/50 transition-colors duration-200" title="Поделиться">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+        </div>
+    </header>
+
+    {% if post.featured_image %}
+    <div class="mb-12 rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/20">
+        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}"
+             class="w-full h-auto">
+    </div>
+    {% endif %}
+
+    <div class="prose prose-invert prose-purple max-w-none prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-8 prose-h2:mb-4 prose-p:leading-relaxed prose-p:text-gray-300 prose-code:bg-gray-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-purple-300 prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-700 prose-blockquote:border-l-4 prose-blockquote:border-purple-500 prose-blockquote:bg-gray-800/50 prose-blockquote:py-3 prose-blockquote:px-4 prose-blockquote:rounded prose-blockquote:italic">
+        {{ post.content|safe }}
+    </div>
+
+    {% if post.tags.all %}
+    <div class="mt-12 pt-8 border-t border-gray-700/50">
+        <h3 class="text-lg font-semibold mb-4 text-gray-300">Теги:</h3>
+        <div class="flex flex-wrap gap-3">
+            {% for tag in post.tags.all %}
+            <a href="{% url 'blog:tag_posts' tag.name %}"
+               class="bg-gradient-to-r from-gray-700/50 to-gray-800/50 hover:from-purple-600/50 hover:to-purple-700/50 px-4 py-2 rounded-full text-sm transition-all duration-200 hover:-translate-y-0.5">
+                #{{ tag.name }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <section class="mt-16 bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
+        <div class="flex gap-6">
+            <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">
+                {{ post.author.username|first|upper }}
+            </div>
+            <div>
+                <h3 class="text-xl font-bold mb-2">{{ post.author.username }}</h3>
+                <p class="text-gray-400 leading-relaxed">
+                    Автор технического блога CodeWithBrain. Пишу о Python, Django, ИИ и современной веб-разработке.
+                </p>
+                <div class="mt-4 flex gap-3">
+                    <a href="#" class="text-purple-400 hover:text-purple-300 font-medium">Все статьи автора →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% if related_posts %}
+    <section class="mt-16">
+        <h3 class="text-3xl font-bold mb-8 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            Похожие статьи
+        </h3>
+        <div class="grid md:grid-cols-3 gap-6">
+            {% for post in related_posts %}
+            <a href="{{ post.get_absolute_url }}"
+               class="group bg-gray-800/50 rounded-xl p-6 border border-gray-700/50 hover:border-purple-500/50 hover:-translate-y-1 transition-all duration-300">
+                <h4 class="font-bold mb-2 group-hover:text-purple-400 transition-colors">
+                    {{ post.title }}
+                </h4>
+                <p class="text-sm text-gray-400">{{ post.excerpt|truncatewords:15 }}</p>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+</div>
+
+<button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+        class="fixed bottom-8 right-8 bg-purple-600 hover:bg-purple-700 w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-purple-900/30 transition-all duration-200 hover:-translate-y-1">
+    ↑
+</button>
+{% endblock %}

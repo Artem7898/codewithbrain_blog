@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CodeWithBrain{% endblock %}</title>
+
+    <!-- Современный шрифт Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+
+    <style>
+        /* Кастомные анимации и стили 2026 */
+        :root {
+            --primary: #8b5cf6;
+            --primary-dark: #7c3aed;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Glassmorphism для navbar */
+        .navbar-glass {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+        }
+
+        /* Прогресс-бар прокрутки */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(139, 92, 246, 0.2);
+            z-index: 9999;
+        }
+
+        .scroll-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, #a855f7 100%);
+            width: 0%;
+            transition: width 0.2s ease;
+        }
+
+        /* Hover-эффект для кнопок */
+        .btn-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Анимация печатающегося текста */
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        /* Микро-анимации */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+    <!-- Прогресс-бар прокрутки -->
+    <div class="scroll-progress">
+        <div class="scroll-progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Navbar с glassmorphism -->
+    <nav class="navbar-glass sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <!-- Logo с градиентом -->
+                <a href="{% url 'blog:post_list' %}"
+                   class="text-2xl font-extrabold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent hover:from-purple-300 hover:to-pink-300 transition-all duration-300">
+                    🧠 CodeWithBrain
+                </a>
+
+                <!-- Поиск с glass-эффектом -->
+                <form action="{% url 'blog:search' %}" class="flex items-center">
+                    <input type="text" name="q" placeholder="Поиск статей..."
+                           class="bg-gray-800/50 border border-gray-700/50 px-4 py-2 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all duration-300 w-64">
+                    <button class="bg-gradient-to-r from-purple-600 to-purple-700 px-5 py-2 rounded-r-lg hover:from-purple-500 hover:to-purple-600 btn-hover font-medium">
+                        🔍
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content с анимацией -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer с glassmorphism -->
+   <footer class="bg-gray-900/80 backdrop-blur-sm border-t border-gray-800/50 mt-16 py-8 text-center">
+    <div class="max-w-7xl mx-auto px-4">
+        <p class="text-gray-400 text-sm">
+            © 2025-2026 CodeWithBrain. Блог про ИИ и Python с ❤️ и 🧠
+                             Artem Alimpiev
+        </p>
+        <div class="mt-4 flex justify-center gap-4">
+            <!-- Замените ссылки ниже на свои настоящие адреса -->
+
+            <!-- GitHub -->
+            <a href="https://github.com/Artem7898" target="_blank" class="text-gray-500 hover:text-purple-400 transition">GitHub</a>
+
+            <!-- Telegram (формат ссылки: https://t.me/username) -->
+            <a href="https://t.me/Artem_Alimpiev" target="_blank" class="text-gray-500 hover:text-purple-400 transition">Telegram</a>
+
+            <!-- RSS (обычно это путь к файлу rss.xml на вашем сайте) -->
+            <a href="https://www.linkedin.com/in/artem-alimpiev/" class="text-gray-500 hover:text-purple-400 transition">Linkedin</a>
+        </div>
+    </div>
+</footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        hljs.highlightAll();
+
+        // Прогресс-бар при скролле
+        window.addEventListener('scroll', () => {
+            const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+        });
+
+        // Smooth scroll для внутренних ссылок
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
