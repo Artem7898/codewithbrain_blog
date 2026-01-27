@@ -14,10 +14,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Make entrypoint executable
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# Собираем статические файлы
+RUN python manage.py collectstatic --noinput
+
+# Применяем миграции
+RUN python manage.py migrate --noinput
 
 EXPOSE 8000
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application"]
