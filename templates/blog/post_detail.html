@@ -54,10 +54,28 @@
         </div>
     </header>
 
-    {% if post.featured_image %}
+    {% if post.get_featured_image %}
     <div class="mb-12 rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/20">
-        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}"
-             class="w-full h-auto">
+        <img src="{{ post.get_featured_image }}" alt="{{ post.title }}"
+             class="w-full h-auto max-h-[500px] object-cover">
+        
+        <!-- Индикатор источника изображения -->
+        <div class="mt-2 flex items-center justify-center">
+            {% if post.featured_image_url %}
+                <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-600/20 text-green-300 rounded-full text-sm">
+                    <span>🌐</span>
+                    <span>Изображение из интернета</span>
+                    {% if "sora" in post.featured_image_url|lower or "openai" in post.featured_image_url|lower %}
+                        <span class="ml-1">(AI-generated)</span>
+                    {% endif %}
+                </span>
+            {% elif post.featured_image %}
+                <span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-600/20 text-blue-300 rounded-full text-sm">
+                    <span>💾</span>
+                    <span>Загруженное изображение</span>
+                </span>
+            {% endif %}
+        </div>
     </div>
     {% endif %}
 
