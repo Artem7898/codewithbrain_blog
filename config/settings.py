@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     'taggit',
     'django_ckeditor_5',
     'blog',
+    # Cloudinary для изображений
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 MIDDLEWARE = [
@@ -133,8 +136,38 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 WHITENOISE_MANIFEST_STRICT = False
 WHITENOISE_USE_FINDERS = True
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# ==================== CLOUDINARY НАСТРОЙКИ ====================
+
+# Если есть Cloudinary ключи, используем Cloudinary, иначе локальное хранилище
+CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME')
+CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY')
+CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET')
+
+if all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET]):
+    import cloudinary
+    import cloudinary.uploader
+    import cloudinary.api
+    
+    cloudinary.config(
+        cloud_name=CLOUDINARY_CLOUD_NAME,
+        api_key=CLOUDINARY_API_KEY,
+        api_secret=CLOUDINARY_API_SECRET
+    )
+    
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    
+    print("=" * 50)
+    print("✅ Используется Cloudinary для хранения изображений")
+    print("=" * 50)
+else:
+    # Локальная разработка: стандартное хранилище файлов
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
+    
+    print("=" * 50)
+    print("⚠️ Cloudinary не настроен, используем локальное хранилище файлов")
+    print("ℹ️ Для продакшена добавьте переменные CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET")
+    print("=" * 50)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
