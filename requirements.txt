@@ -15,3 +15,6 @@ django-unfold==0.22.0
 # Утилиты
 Pillow==10.2.0
 python-slugify==8.0.1
+
+django-cloudinary-storage==0.3.0
+cloudinary==1.36.0
