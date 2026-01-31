@@ -44,7 +44,22 @@ class Post(models.Model):
     
     excerpt = models.TextField('Краткое описание', max_length=500)
     content = CKEditor5Field('Содержание', config_name='default')
-    featured_image = models.ImageField('Изображение', upload_to='posts/%Y/%m/', blank=True)
+    
+    # ДВА варианта для изображения:
+    featured_image = models.ImageField(
+        'Загрузить изображение с компьютера', 
+        upload_to='posts/%Y/%m/', 
+        blank=True, 
+        null=True,
+        help_text='Загрузите JPG/PNG файл с вашего компьютера'
+    )
+    
+    featured_image_url = models.URLField(
+        'Ссылка на изображение (Sora/Интернет)',
+        blank=True, 
+        null=True,
+        help_text='Вставьте прямую ссылку на изображение из Sora или интернета'
+    )
     
     tags = TaggableManager(verbose_name='Теги', blank=True)
     
@@ -66,6 +81,24 @@ class Post(models.Model):
         if self.status == 'published' and not self.published_at:
             self.published_at = timezone.now()
         super().save(*args, **kwargs)
+    
+    # Автоматически выбираем изображение (приоритет у URL)
+    @property
+    def get_featured_image(self):
+        if self.featured_image_url:
+            return self.featured_image_url
+        elif self.featured_image:
+            return self.featured_image.url
+        return None
+    
+    # Для отображения источника изображения
+    @property
+    def image_source(self):
+        if self.featured_image_url:
+            return "🌐 Внешняя ссылка"
+        elif self.featured_image:
+            return "💾 Загружено"
+        return "Нет изображения"
     
     def get_absolute_url(self):
         return reverse('blog:post_detail', kwargs={'slug': self.slug})
